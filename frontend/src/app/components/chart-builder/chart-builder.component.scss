@@ -1,0 +1,673 @@
+.chart-builder {
+  padding: 24px;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.builder-header {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h1 {
+    margin: 0;
+    color: #1976d2;
+    font-size: 2rem;
+    font-weight: 300;
+  }
+
+  p {
+    margin: 4px 0 0 0;
+    color: #666;
+    font-size: 1rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+}
+
+/* Main Content */
+.builder-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 300px 1fr 400px;
+  gap: 24px;
+  overflow: hidden;
+}
+
+/* Configuration Panel */
+.config-panel {
+  overflow-y: auto;
+
+  .config-card {
+    height: fit-content;
+  }
+
+  .config-form {
+    .form-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      mat-form-field {
+        flex: 1;
+
+        &.full-width {
+          width: 100%;
+        }
+      }
+
+      mat-slide-toggle {
+        margin-top: 8px;
+      }
+    }
+
+    mat-expansion-panel {
+      margin-bottom: 16px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+/* Drag-Drop Panel */
+.dragdrop-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+
+  .fields-card {
+    flex: 1;
+    overflow: hidden;
+
+    mat-card-content {
+      height: calc(100% - 80px);
+      overflow-y: auto;
+    }
+  }
+
+  .chart-config-card {
+    height: fit-content;
+  }
+}
+
+/* Available Fields */
+.fields-container {
+  .field-category {
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .field-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 0;
+  }
+
+  .field-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    cursor: grab;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #e3f2fd;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.cdk-drag-dragging {
+      cursor: grabbing;
+      transform: rotate(5deg);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .field-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+
+      .field-name {
+        font-weight: 500;
+        color: #333;
+        font-size: 0.9rem;
+      }
+
+      .field-type {
+        font-size: 0.8rem;
+        color: #666;
+        text-transform: uppercase;
+      }
+
+      .field-unit {
+        font-size: 0.8rem;
+        color: #999;
+        font-style: italic;
+      }
+    }
+
+    .drag-handle {
+      color: #999;
+      font-size: 18px;
+      cursor: grab;
+    }
+
+    .field-actions {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+
+      button {
+        width: 32px;
+        height: 32px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+
+        // Dynamic colors based on field type
+        &[title*="X-Axis"] {
+          color: #ff9800; // Orange for X-axis
+        }
+
+        &[title*="Y-Axis"] {
+          color: #2196f3; // Blue for Y-axis
+        }
+
+        &[title*="Label"] {
+          color: #9c27b0; // Purple for labels
+        }
+
+        &[title*="Value"] {
+          color: #f44336; // Red for values
+        }
+
+        &[title*="Category"] {
+          color: #795548; // Brown for categories
+        }
+
+        &[title*="Size"] {
+          color: #607d8b; // Blue-grey for size
+        }
+
+        &[title*="Series"] {
+          color: #4caf50; // Green for series
+        }
+      }
+    }
+  }
+}
+
+/* Drop Zones */
+.drop-zone {
+  margin-bottom: 16px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.3s ease;
+
+  &.cdk-drop-list-dragging {
+    border-color: #1976d2;
+    background: rgba(25, 118, 210, 0.05);
+  }
+
+  .drop-zone-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 500;
+    color: #666;
+
+    mat-icon {
+      font-size: 20px;
+    }
+  }
+
+  .drop-zone-content {
+    min-height: 40px;
+
+    .placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      color: #999;
+      font-style: italic;
+      border: 1px dashed #ccc;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+
+    .dropped-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #e8f5e8;
+      border: 1px solid #4caf50;
+      border-radius: 4px;
+      margin-bottom: 8px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .field-name {
+        font-weight: 500;
+        color: #2e7d32;
+      }
+
+      .field-type {
+        font-size: 0.8rem;
+        color: #4caf50;
+      }
+
+      .remove-btn {
+        margin-left: auto;
+        width: 24px;
+        height: 24px;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      &.series-field {
+        .series-color {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+
+  &.x-axis-zone {
+    border-color: #ff9800;
+
+    &.cdk-drop-list-dragging {
+      border-color: #ff9800;
+      background: rgba(255, 152, 0, 0.05);
+    }
+
+    .drop-zone-header {
+      color: #ff9800;
+    }
+
+    .dropped-field {
+      background: #fff3e0;
+      border-color: #ff9800;
+
+      .field-name {
+        color: #e65100;
+      }
+
+      .field-type {
+        color: #ff9800;
+      }
+    }
+  }
+
+  &.y-axis-zone {
+    border-color: #9c27b0;
+
+    &.cdk-drop-list-dragging {
+      border-color: #9c27b0;
+      background: rgba(156, 39, 176, 0.05);
+    }
+
+    .drop-zone-header {
+      color: #9c27b0;
+    }
+
+    .dropped-field {
+      background: #f3e5f5;
+      border-color: #9c27b0;
+
+      .field-name {
+        color: #4a148c;
+      }
+
+      .field-type {
+        color: #9c27b0;
+      }
+    }
+  }
+
+  &.series-zone {
+    border-color: #2196f3;
+
+    &.cdk-drop-list-dragging {
+      border-color: #2196f3;
+      background: rgba(33, 150, 243, 0.05);
+    }
+
+    .drop-zone-header {
+      color: #2196f3;
+    }
+
+    .dropped-field {
+      background: #e3f2fd;
+      border-color: #2196f3;
+
+      .field-name {
+        color: #0d47a1;
+      }
+
+      .field-type {
+        color: #2196f3;
+      }
+    }
+  }
+}
+
+/* Chart Preview */
+.chart-panel {
+  overflow-y: auto;
+
+  .chart-preview-card {
+    height: fit-content;
+  }
+
+  .chart-container {
+    position: relative;
+    min-height: 400px;
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.9);
+      z-index: 10;
+
+      p {
+        margin-top: 16px;
+        color: #666;
+      }
+    }
+
+
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .builder-content {
+    grid-template-columns: 280px 1fr 350px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .builder-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    gap: 16px;
+  }
+
+  .config-panel,
+  .dragdrop-panel {
+    overflow: visible;
+  }
+
+  .fields-card {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-builder {
+    padding: 16px;
+  }
+
+  .builder-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+
+    .header-actions {
+      width: 100%;
+      justify-content: space-between;
+
+      button {
+        flex: 1;
+        max-width: 120px;
+      }
+    }
+  }
+
+  .builder-content {
+    gap: 12px;
+  }
+}
+
+/* Dynamic Field Zone Styles */
+.selection-zone {
+  .selection-zone-header {
+    .required-chip {
+      background-color: #f44336;
+      color: white;
+      font-size: 0.7rem;
+      height: 20px;
+      line-height: 20px;
+      margin-left: auto;
+    }
+
+    .optional-chip {
+      background-color: #4caf50;
+      color: white;
+      font-size: 0.7rem;
+      height: 20px;
+      line-height: 20px;
+      margin-left: auto;
+    }
+  }
+
+  // Specific zone colors
+  &.label-zone .selection-zone-header mat-icon {
+    color: #9c27b0; // Purple for labels
+  }
+
+  &.value-zone .selection-zone-header mat-icon {
+    color: #f44336; // Red for values
+  }
+
+  &.category-zone .selection-zone-header mat-icon {
+    color: #795548; // Brown for categories
+  }
+
+  &.size-zone .selection-zone-header mat-icon {
+    color: #607d8b; // Blue-grey for size
+  }
+
+  &.x-axis-zone .selection-zone-header mat-icon {
+    color: #ff9800; // Orange for X-axis
+  }
+
+  &.y-axis-zone .selection-zone-header mat-icon {
+    color: #2196f3; // Blue for Y-axis
+  }
+
+  &.series-zone .selection-zone-header mat-icon {
+    color: #4caf50; // Green for series
+  }
+}
+
+/* Chart Description Styling */
+.chart-description {
+  font-style: italic;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Configuration Status Styling */
+.configuration-status {
+  font-size: 0.8rem;
+  font-weight: normal;
+  margin-left: 8px;
+
+  &.valid {
+    color: #4caf50;
+  }
+
+  &.invalid {
+    color: #f44336;
+  }
+}
+
+/* Validation Errors */
+.validation-errors {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 12px;
+  background-color: #fff3e0;
+  border: 1px solid #ff9800;
+  border-radius: 4px;
+
+  mat-icon {
+    color: #ff9800;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .error-list {
+    flex: 1;
+
+    .error-item {
+      color: #e65100;
+      font-size: 0.9rem;
+      margin: 2px 0;
+    }
+  }
+}
+
+/* Configuration Progress Bar */
+.config-progress {
+  margin-top: 8px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+/* Enhanced Field Actions */
+.field-actions {
+  button {
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+/* Series Management */
+.series-field {
+  position: relative;
+
+  .series-color {
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  &:hover {
+    background-color: #e8f5e8;
+  }
+}
+
+/* Chart Type Transition Messages */
+.transition-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #323232;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 4px;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+  .field-actions {
+    flex-wrap: wrap;
+    gap: 2px;
+
+    button {
+      width: 28px;
+      height: 28px;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+
+  .validation-errors {
+    flex-direction: column;
+
+    mat-icon {
+      align-self: flex-start;
+    }
+  }
+}

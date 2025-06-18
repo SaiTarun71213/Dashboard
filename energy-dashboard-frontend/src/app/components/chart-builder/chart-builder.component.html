@@ -1,0 +1,405 @@
+<div class="chart-builder">
+  <!-- Header -->
+  <div class="builder-header">
+    <h1>Chart Builder</h1>
+    <p>Drag and drop fields to create custom charts with real-time data</p>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="previewChart()" [disabled]="isLoadingData">
+        <mat-icon>preview</mat-icon>
+        Preview Chart
+      </button>
+      <button mat-raised-button color="accent" (click)="saveChart()" [disabled]="!currentConfig">
+        <mat-icon>save</mat-icon>
+        Save Chart
+      </button>
+      <button mat-button (click)="createNewChart()">
+        <mat-icon>add</mat-icon>
+        New Chart
+      </button>
+    </div>
+  </div>
+
+  <div class="builder-content">
+    <!-- Configuration Panel -->
+    <div class="config-panel">
+      <mat-card class="config-card">
+        <mat-card-header>
+          <mat-card-title>Chart Configuration</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="configForm" class="config-form">
+            <!-- Basic Settings -->
+            <mat-expansion-panel expanded="true">
+              <mat-expansion-panel-header>
+                <mat-panel-title>Basic Settings</mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Chart Name</mat-label>
+                  <input matInput formControlName="name" placeholder="Enter chart name">
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Description</mat-label>
+                  <textarea matInput formControlName="description" rows="2" placeholder="Chart description"></textarea>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Data Level</mat-label>
+                  <mat-select formControlName="level" (selectionChange)="onLevelChange($event.value)">
+                    <mat-option *ngFor="let level of dataLevels" [value]="level.value">
+                      <mat-icon>{{ level.icon }}</mat-icon>
+                      {{ level.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Chart Type</mat-label>
+                  <mat-select formControlName="chartType" (selectionChange)="onChartTypeChange($event.value)">
+                    <mat-option *ngFor="let type of chartTypes" [value]="type.type">
+                      <mat-icon>{{ type.icon }}</mat-icon>
+                      {{ type.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </mat-expansion-panel>
+
+            <!-- Real-time Settings -->
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>Real-time Settings</mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Time Range</mat-label>
+                  <mat-select formControlName="timeRange">
+                    <mat-option value="1h">Last Hour</mat-option>
+                    <mat-option value="24h">Last 24 Hours</mat-option>
+                    <mat-option value="7d">Last 7 Days</mat-option>
+                    <mat-option value="30d">Last 30 Days</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Refresh Interval (ms)</mat-label>
+                  <input matInput type="number" formControlName="refreshInterval">
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-slide-toggle formControlName="realTimeEnabled">
+                  Enable Real-time Updates
+                </mat-slide-toggle>
+              </div>
+
+              <div class="form-row" *ngIf="configForm.get('realTimeEnabled')?.value">
+                <mat-form-field appearance="outline">
+                  <mat-label>Max Data Points</mat-label>
+                  <input matInput type="number" formControlName="maxDataPoints">
+                </mat-form-field>
+              </div>
+            </mat-expansion-panel>
+
+            <!-- Chart Options -->
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>Chart Options</mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="form-row">
+                <mat-slide-toggle formControlName="showLegend">Show Legend</mat-slide-toggle>
+              </div>
+              <div class="form-row">
+                <mat-slide-toggle formControlName="showDataLabels">Show Data Labels</mat-slide-toggle>
+              </div>
+              <div class="form-row">
+                <mat-slide-toggle formControlName="enableAnimation">Enable Animation</mat-slide-toggle>
+              </div>
+            </mat-expansion-panel>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Drag-Drop Panel -->
+    <div class="dragdrop-panel">
+      <!-- Available Fields -->
+      <mat-card class="fields-card">
+        <mat-card-header>
+          <mat-card-title>Available Fields</mat-card-title>
+          <mat-card-subtitle>Drag fields to chart axes and series</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="fields-container">
+            <mat-expansion-panel *ngFor="let category of fieldCategories" class="field-category">
+              <mat-expansion-panel-header>
+                <mat-panel-title>{{ category }}</mat-panel-title>
+                <mat-panel-description>
+                  {{ getFieldsByCategory(category).length }} fields
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <div class="field-list">
+                <div *ngFor="let field of getFieldsByCategory(category)" class="field-item">
+                  <div class="field-content">
+                    <span class="field-name">{{ field.label }}</span>
+                    <span class="field-type">{{ field.type }}</span>
+                    <span class="field-unit" *ngIf="field.unit">({{ field.unit }})</span>
+                  </div>
+                  <div class="field-actions">
+                    <!-- Axis-based chart buttons -->
+                    <button *ngIf="requiresField('xAxis')" mat-icon-button (click)="selectField(field, 'xAxis')"
+                      title="Set as X-Axis">
+                      <mat-icon>trending_flat</mat-icon>
+                    </button>
+                    <button *ngIf="requiresField('yAxis')" mat-icon-button (click)="selectField(field, 'yAxis')"
+                      title="Set as Y-Axis">
+                      <mat-icon>trending_up</mat-icon>
+                    </button>
+
+                    <!-- Categorical chart buttons -->
+                    <button *ngIf="requiresField('labelField')" mat-icon-button
+                      (click)="selectField(field, 'labelField')" title="Set as Label">
+                      <mat-icon>label</mat-icon>
+                    </button>
+                    <button *ngIf="requiresField('valueField')" mat-icon-button
+                      (click)="selectField(field, 'valueField')" title="Set as Value">
+                      <mat-icon>functions</mat-icon>
+                    </button>
+
+                    <!-- Specialized chart buttons -->
+                    <button *ngIf="requiresField('categoryField')" mat-icon-button
+                      (click)="selectField(field, 'categoryField')" title="Set as Category">
+                      <mat-icon>category</mat-icon>
+                    </button>
+                    <button *ngIf="requiresField('sizeField')" mat-icon-button (click)="selectField(field, 'sizeField')"
+                      title="Set as Size">
+                      <mat-icon>bubble_chart</mat-icon>
+                    </button>
+
+                    <!-- Series button (for multi-series charts) -->
+                    <button *ngIf="supportsMultiSeries" mat-icon-button (click)="selectField(field, 'series')"
+                      title="Add to Series">
+                      <mat-icon>add_chart</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Chart Configuration Areas -->
+      <mat-card class="chart-config-card">
+        <mat-card-header>
+          <mat-card-title>
+            Chart Configuration
+            <span class="configuration-status" [class.valid]="isConfigurationValid"
+              [class.invalid]="!isConfigurationValid">
+              ({{ configurationCompleteness }}% Complete)
+            </span>
+          </mat-card-title>
+          <mat-card-subtitle>
+            Configure your {{ currentChartTypeConfig?.label || 'chart' }}
+            <span *ngIf="currentChartTypeConfig?.description" class="chart-description">
+              - {{ currentChartTypeConfig.description }}
+            </span>
+          </mat-card-subtitle>
+
+          <!-- Validation Errors -->
+          <div *ngIf="validationErrors.length > 0" class="validation-errors">
+            <mat-icon>warning</mat-icon>
+            <div class="error-list">
+              <div *ngFor="let error of validationErrors" class="error-item">{{ error }}</div>
+            </div>
+          </div>
+
+          <!-- Configuration Progress -->
+          <mat-progress-bar mode="determinate" [value]="configurationCompleteness"
+            [color]="isConfigurationValid ? 'primary' : 'warn'" class="config-progress">
+          </mat-progress-bar>
+        </mat-card-header>
+        <mat-card-content>
+          <!-- X-Axis Selection (for axis-based charts) -->
+          <div *ngIf="requiresField('xAxis')" class="selection-zone x-axis-zone">
+            <div class="selection-zone-header">
+              <mat-icon>horizontal_rule</mat-icon>
+              <span>X-Axis</span>
+              <mat-chip *ngIf="requiredFields.includes('xAxis')" class="required-chip">Required</mat-chip>
+            </div>
+            <div class="selection-zone-content">
+              <div *ngIf="xAxisField; else xAxisPlaceholder" class="selected-field">
+                <span class="field-name">{{ xAxisField.label }}</span>
+                <span class="field-type">({{ xAxisField.type }})</span>
+                <button mat-icon-button (click)="xAxisField = null" class="remove-btn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <ng-template #xAxisPlaceholder>
+                <div class="placeholder">Click a field's X-axis button to select</div>
+              </ng-template>
+            </div>
+          </div>
+
+          <!-- Y-Axis Selection (for axis-based charts) -->
+          <div *ngIf="requiresField('yAxis')" class="selection-zone y-axis-zone">
+            <div class="selection-zone-header">
+              <mat-icon>vertical_align_center</mat-icon>
+              <span>Y-Axis</span>
+              <mat-chip *ngIf="requiredFields.includes('yAxis')" class="required-chip">Required</mat-chip>
+            </div>
+            <div class="selection-zone-content">
+              <div *ngIf="yAxisField; else yAxisPlaceholder" class="selected-field">
+                <span class="field-name">{{ yAxisField.label }}</span>
+                <span class="field-type">({{ yAxisField.type }})</span>
+                <button mat-icon-button (click)="yAxisField = null" class="remove-btn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <ng-template #yAxisPlaceholder>
+                <div class="placeholder">Click a field's Y-axis button to select</div>
+              </ng-template>
+            </div>
+          </div>
+
+          <!-- Label Field (for categorical charts like pie) -->
+          <div *ngIf="requiresField('labelField')" class="selection-zone label-zone">
+            <div class="selection-zone-header">
+              <mat-icon>label</mat-icon>
+              <span>Label Field</span>
+              <mat-chip *ngIf="requiredFields.includes('labelField')" class="required-chip">Required</mat-chip>
+            </div>
+            <div class="selection-zone-content">
+              <div *ngIf="labelField; else labelPlaceholder" class="selected-field">
+                <span class="field-name">{{ labelField.label }}</span>
+                <span class="field-type">({{ labelField.type }})</span>
+                <button mat-icon-button (click)="labelField = null" class="remove-btn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <ng-template #labelPlaceholder>
+                <div class="placeholder">Click a field's label button to select</div>
+              </ng-template>
+            </div>
+          </div>
+
+          <!-- Value Field (for categorical and specialized charts) -->
+          <div *ngIf="requiresField('valueField')" class="selection-zone value-zone">
+            <div class="selection-zone-header">
+              <mat-icon>functions</mat-icon>
+              <span>Value Field</span>
+              <mat-chip *ngIf="requiredFields.includes('valueField')" class="required-chip">Required</mat-chip>
+            </div>
+            <div class="selection-zone-content">
+              <div *ngIf="valueField; else valuePlaceholder" class="selected-field">
+                <span class="field-name">{{ valueField.label }}</span>
+                <span class="field-type">({{ valueField.type }})</span>
+                <button mat-icon-button (click)="valueField = null" class="remove-btn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <ng-template #valuePlaceholder>
+                <div class="placeholder">Click a field's value button to select</div>
+              </ng-template>
+            </div>
+          </div>
+
+          <!-- Category Field (for heatmaps) -->
+          <div *ngIf="requiresField('categoryField')" class="selection-zone category-zone">
+            <div class="selection-zone-header">
+              <mat-icon>category</mat-icon>
+              <span>Category Field</span>
+              <mat-chip *ngIf="requiredFields.includes('categoryField')" class="required-chip">Required</mat-chip>
+            </div>
+            <div class="selection-zone-content">
+              <div *ngIf="categoryField; else categoryPlaceholder" class="selected-field">
+                <span class="field-name">{{ categoryField.label }}</span>
+                <span class="field-type">({{ categoryField.type }})</span>
+                <button mat-icon-button (click)="categoryField = null" class="remove-btn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <ng-template #categoryPlaceholder>
+                <div class="placeholder">Click a field's category button to select</div>
+              </ng-template>
+            </div>
+          </div>
+
+          <!-- Size Field (for bubble charts) -->
+          <div *ngIf="requiresField('sizeField')" class="selection-zone size-zone">
+            <div class="selection-zone-header">
+              <mat-icon>bubble_chart</mat-icon>
+              <span>Size Field</span>
+              <mat-chip *ngIf="requiredFields.includes('sizeField')" class="required-chip">Required</mat-chip>
+            </div>
+            <div class="selection-zone-content">
+              <div *ngIf="sizeField; else sizePlaceholder" class="selected-field">
+                <span class="field-name">{{ sizeField.label }}</span>
+                <span class="field-type">({{ sizeField.type }})</span>
+                <button mat-icon-button (click)="sizeField = null" class="remove-btn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <ng-template #sizePlaceholder>
+                <div class="placeholder">Click a field's size button to select</div>
+              </ng-template>
+            </div>
+          </div>
+
+          <!-- Series Selection (for multi-series charts) -->
+          <div *ngIf="supportsMultiSeries" class="selection-zone series-zone">
+            <div class="selection-zone-header">
+              <mat-icon>timeline</mat-icon>
+              <span>Data Series</span>
+              <mat-chip *ngIf="optionalFields.includes('series')" class="optional-chip">Optional</mat-chip>
+            </div>
+            <div class="selection-zone-content">
+              <div *ngFor="let field of seriesFields; let i = index" class="selected-field series-field">
+                <div class="series-color" [style.background-color]="getSeriesColor(i)"></div>
+                <span class="field-name">{{ field.label }}</span>
+                <span class="field-type">({{ field.type }})</span>
+                <button mat-icon-button (click)="removeSeriesField(i)" class="remove-btn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <div *ngIf="seriesFields.length === 0" class="placeholder">
+                Click a field's series button to add multiple data series
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Chart Preview -->
+    <div class="chart-panel">
+      <mat-card class="chart-preview-card">
+        <mat-card-header>
+          <mat-card-title>Chart Preview</mat-card-title>
+          <mat-card-subtitle>Live preview of your chart configuration</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container" #chartContainer>
+            <div *ngIf="isLoadingData" class="loading-overlay">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Loading chart data...</p>
+            </div>
+            <!-- Highcharts Chart -->
+            <highcharts-chart [Highcharts]="Highcharts" [options]="chartOptions"
+              style="width: 100%; height: 400px; display: block;">
+            </highcharts-chart>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

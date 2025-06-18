@@ -1,0 +1,84 @@
+<!-- Login Component -->
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <mat-icon class="login-icon">bolt</mat-icon>
+            <h1>Energy Dashboard</h1>
+            <p>Sign in to access your energy monitoring dashboard</p>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+            <!-- Email Field -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Email</mat-label>
+                <input matInput type="email" formControlName="email" placeholder="Enter your email"
+                    autocomplete="email">
+                <mat-icon matSuffix>email</mat-icon>
+                <mat-error *ngIf="loginForm.get('email')?.hasError('required')">
+                    Email is required
+                </mat-error>
+                <mat-error *ngIf="loginForm.get('email')?.hasError('email')">
+                    Please enter a valid email
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Password Field -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Password</mat-label>
+                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
+                    placeholder="Enter your password" autocomplete="current-password">
+                <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"
+                    [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hidePassword">
+                    <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+                <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
+                    Password is required
+                </mat-error>
+                <mat-error *ngIf="loginForm.get('password')?.hasError('minlength')">
+                    Password must be at least 6 characters
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Remember Me -->
+            <div class="login-options">
+                <mat-checkbox formControlName="rememberMe">
+                    Remember me
+                </mat-checkbox>
+                <a href="#" class="forgot-password">Forgot password?</a>
+            </div>
+
+            <!-- Error Message -->
+            <div *ngIf="errorMessage" class="error-message">
+                <mat-icon>error</mat-icon>
+                <span>{{ errorMessage }}</span>
+            </div>
+
+            <!-- Submit Button -->
+            <button mat-raised-button color="primary" type="submit" class="login-button full-width"
+                [disabled]="loginForm.invalid || isLoading">
+                <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+                <span *ngIf="!isLoading">Sign In</span>
+                <span *ngIf="isLoading">Signing In...</span>
+            </button>
+        </form>
+
+        <!-- Demo Credentials -->
+        <div class="demo-credentials">
+            <h3>Demo Credentials</h3>
+            <div class="demo-user" (click)="fillDemoCredentials('admin')">
+                <strong>Admin:</strong> admin&#64;energydashboard.com / Admin123!
+            </div>
+            <div class="demo-user" (click)="fillDemoCredentials('operator')">
+                <strong>Operator:</strong> operator&#64;energydashboard.com / Operator123!
+            </div>
+            <div class="demo-user" (click)="fillDemoCredentials('viewer')">
+                <strong>Viewer:</strong> viewer&#64;energydashboard.com / Viewer123!
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="login-footer">
+            <p>&copy; 2024 Energy Dashboard. All rights reserved.</p>
+        </div>
+    </div>
+</div>

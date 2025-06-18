@@ -1,0 +1,182 @@
+<!-- Dashboard Component -->
+<div class="dashboard-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1>Energy Dashboard Overview</h1>
+        <p>Real-time monitoring of energy generation across 8 Indian states</p>
+
+        <!-- Backend Connection Status -->
+        <div class="backend-status" *ngIf="backendStatus">
+            <mat-icon>{{ backendStatus.connected ? 'cloud_done' : 'cloud_off' }}</mat-icon>
+            <span>Backend: {{ backendStatus.connected ? 'Connected' : 'Disconnected' }}</span>
+            <span *ngIf="backendStatus.connected" class="api-info">
+                ({{ backendStatus.version }} - {{ backendStatus.endpoints }} endpoints)
+            </span>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="quick-stats" *ngIf="sectorData$ | async as sectorData">
+            <mat-card class="stat-card power">
+                <mat-card-content>
+                    <div class="stat-icon">
+                        <mat-icon>bolt</mat-icon>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ sectorData.totalPower | number:'1.1-1' }} kW</div>
+                        <div class="stat-label">Total Power Generation</div>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
+            <mat-card class="stat-card efficiency">
+                <mat-card-content>
+                    <div class="stat-icon">
+                        <mat-icon>trending_up</mat-icon>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ sectorData.avgEfficiency | number:'1.1-1' }}%</div>
+                        <div class="stat-label">Average Efficiency</div>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
+            <mat-card class="stat-card equipment">
+                <mat-card-content>
+                    <div class="stat-icon">
+                        <mat-icon>precision_manufacturing</mat-icon>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ sectorData.totalEquipment }}</div>
+                        <div class="stat-label">Active Equipment</div>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
+            <mat-card class="stat-card states">
+                <mat-card-content>
+                    <div class="stat-icon">
+                        <mat-icon>map</mat-icon>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value">{{ sectorData.stateCount || 8 }}</div>
+                        <div class="stat-label">States Monitored</div>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+        </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-content">
+        <!-- Real-time Chart Section -->
+        <div class="chart-section">
+            <mat-card class="chart-card">
+                <mat-card-header>
+                    <mat-card-title>Real-time Power Generation</mat-card-title>
+                    <mat-card-subtitle>Live data updates every 30 seconds</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                    <div class="chart-container">
+                        <div class="chart-placeholder">
+                            <mat-icon>insert_chart</mat-icon>
+                            <p>Highcharts visualization will be integrated here</p>
+                            <p class="chart-note">Showing live data from {{ (sectorData$ | async)?.totalEquipment || 8
+                                }} equipment units</p>
+                        </div>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+        </div>
+
+        <!-- State Overview Section -->
+        <div class="states-section">
+            <mat-card class="states-card">
+                <mat-card-header>
+                    <mat-card-title>State-wise Overview</mat-card-title>
+                    <mat-card-subtitle>Power generation by state</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                    <div class="states-grid" *ngIf="stateData$ | async as stateData">
+                        <div class="state-item" *ngFor="let state of stateData">
+                            <div class="state-header">
+                                <h3>{{ state.name }}</h3>
+                                <span class="state-status" [class.online]="state.operationalCount > 0">
+                                    {{ state.operationalCount > 0 ? 'Online' : 'Offline' }}
+                                </span>
+                            </div>
+                            <div class="state-metrics">
+                                <div class="metric">
+                                    <span class="metric-label">Power:</span>
+                                    <span class="metric-value">{{ state.totalPower | number:'1.1-1' }} kW</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Plants:</span>
+                                    <span class="metric-value">{{ state.plantCount }}</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Equipment:</span>
+                                    <span class="metric-value">{{ state.totalEquipment }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading state -->
+                    <div *ngIf="!(stateData$ | async)" class="loading-states">
+                        <mat-spinner diameter="40"></mat-spinner>
+                        <p>Loading state data...</p>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="actions-section">
+            <mat-card class="actions-card">
+                <mat-card-header>
+                    <mat-card-title>Quick Actions</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <div class="action-buttons">
+                        <button mat-raised-button color="primary" routerLink="/chart-builder">
+                            <mat-icon>insert_chart</mat-icon>
+                            Create Chart
+                        </button>
+                        <button mat-raised-button color="accent" routerLink="/dashboard-designer">
+                            <mat-icon>view_quilt</mat-icon>
+                            Design Dashboard
+                        </button>
+                        <button mat-raised-button routerLink="/reports">
+                            <mat-icon>assessment</mat-icon>
+                            Generate Report
+                        </button>
+                        <button mat-raised-button (click)="refreshData()">
+                            <mat-icon>refresh</mat-icon>
+                            Refresh Data
+                        </button>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+        </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="connection-info" *ngIf="connectionStatus$ | async as status">
+        <mat-card class="connection-card" [class.connected]="status.connected">
+            <mat-card-content>
+                <div class="connection-header">
+                    <mat-icon>{{ status.connected ? 'wifi' : 'wifi_off' }}</mat-icon>
+                    <span>{{ status.connected ? 'Connected' : 'Disconnected' }}</span>
+                </div>
+                <div class="connection-details" *ngIf="status.connected">
+                    <div class="detail-item" *ngIf="status.latency">
+                        <span>Latency: {{ status.latency }}ms</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>Uptime: {{ getUptime() }}</span>
+                    </div>
+                </div>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>

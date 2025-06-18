@@ -1,0 +1,159 @@
+/* You can add global styles to this file, and also import other style files */
+
+// Angular Material Theme (simplified)
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+// Global Styles
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+    background-color: #f8f9fa;
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+
+    &:hover {
+        background: #a8a8a8;
+    }
+}
+
+// Material Design overrides
+.mat-toolbar {
+    font-weight: 500;
+}
+
+.mat-card {
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+
+    &:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+    }
+}
+
+.mat-button,
+.mat-raised-button,
+.mat-flat-button {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+}
+
+.mat-form-field {
+    .mat-form-field-outline {
+        border-radius: 8px !important;
+    }
+}
+
+// Utility classes
+.full-width {
+    width: 100%;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mt-16 {
+    margin-top: 16px;
+}
+
+.mb-16 {
+    margin-bottom: 16px;
+}
+
+.ml-16 {
+    margin-left: 16px;
+}
+
+.mr-16 {
+    margin-right: 16px;
+}
+
+.p-16 {
+    padding: 16px;
+}
+
+.p-24 {
+    padding: 24px;
+}
+
+// Animation classes
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.slide-up {
+    animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Energy Dashboard specific styles
+.energy-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.status-online {
+    color: #4caf50;
+}
+
+.status-offline {
+    color: #f44336;
+}
+
+.status-warning {
+    color: #ff9800;
+}

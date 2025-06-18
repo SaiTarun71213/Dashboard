@@ -1,0 +1,63 @@
+{
+  "name": "energy-dashboard-api",
+  "version": "1.0.0",
+  "description": "Backend API for Energy Dashboard - Solar, Wind, Hydro power data management across Indian states",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "seed": "node seed-database.js",
+    "seed:dev": "NODE_ENV=development node seed-database.js",
+    "generate-readings": "node generate-readings.js",
+    "simulate:start": "node src/scripts/simulationControl.js start",
+    "simulate:stop": "node src/scripts/simulationControl.js stop",
+    "simulate:status": "node src/scripts/simulationControl.js status",
+    "simulate:restart": "node src/scripts/simulationControl.js restart"
+  },
+  "keywords": [
+    "energy",
+    "dashboard",
+    "solar",
+    "wind",
+    "hydro",
+    "mongodb",
+    "express",
+    "nodejs",
+    "api",
+    "mean-stack"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "apollo-server-express": "^3.12.1",
+    "axios": "^1.10.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dataloader": "^2.2.3",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.2.1",
+    "graphql": "^16.8.1",
+    "graphql-scalars": "^1.22.4",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.15.2",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.1",
+    "node-cron": "^3.0.3",
+    "redis": "^4.7.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "jest": "^30.0.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.1"
+  }
+}

@@ -1,0 +1,150 @@
+<div class="dashboard-overview">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Energy Dashboard Overview</h1>
+    <p>Real-time monitoring of energy generation across Indian states</p>
+    <button mat-raised-button color="primary" (click)="refreshData()">
+      <mat-icon>refresh</mat-icon>
+      Refresh Data
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading" class="dashboard-content">
+    <!-- Sector Summary -->
+    <div class="summary-section" *ngIf="sectorData$ | async as sectorData">
+      <h2>Sector Summary</h2>
+      <div class="summary-cards">
+        <mat-card class="summary-card power">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>flash_on</mat-icon>
+            <mat-card-title>Total Power</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value">{{ sectorData.totalPower | number:'1.0-0' }}</div>
+            <div class="metric-unit">kW</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card efficiency">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>trending_up</mat-icon>
+            <mat-card-title>Avg Efficiency</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value">{{ sectorData.avgEfficiency | number:'1.1-1' }}</div>
+            <div class="metric-unit">%</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card equipment">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>precision_manufacturing</mat-icon>
+            <mat-card-title>Total Equipment</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value">{{ sectorData.totalEquipment | number:'1.0-0' }}</div>
+            <div class="metric-unit">units</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card plants">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>factory</mat-icon>
+            <mat-card-title>Total Plants</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value">{{ sectorData.totalPlants | number:'1.0-0' }}</div>
+            <div class="metric-unit">plants</div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- State-wise Overview -->
+    <div class="states-section">
+      <h2>State-wise Overview</h2>
+      <div class="states-grid" *ngIf="stateData$ | async as stateData">
+        <mat-card *ngFor="let state of stateData" class="state-card">
+          <mat-card-header>
+            <div class="state-status" [style.background-color]="getStatusColor(state.status)">
+              <mat-icon>{{ getStatusIcon(state.status) }}</mat-icon>
+            </div>
+            <mat-card-title>{{ state.name }}</mat-card-title>
+            <mat-card-subtitle>{{ state.status | titlecase }}</mat-card-subtitle>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="state-metrics">
+              <div class="metric">
+                <span class="label">Power:</span>
+                <span class="value">{{ state.totalPower | number:'1.0-0' }} kW</span>
+              </div>
+              <div class="metric">
+                <span class="label">Efficiency:</span>
+                <span class="value" [style.color]="getEfficiencyColor(state.efficiency)">
+                  {{ state.efficiency | number:'1.1-1' }}%
+                </span>
+              </div>
+              <div class="metric">
+                <span class="label">Plants:</span>
+                <span class="value">{{ state.plantsCount }}</span>
+              </div>
+              <div class="metric">
+                <span class="label">Equipment:</span>
+                <span class="value">{{ state.equipmentCount }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+          
+          <mat-card-actions>
+            <button mat-button color="primary">View Details</button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Real-time Power Generation Chart Placeholder -->
+    <div class="chart-section">
+      <h2>Real-time Power Generation</h2>
+      <mat-card class="chart-card">
+        <mat-card-content>
+          <div class="chart-placeholder">
+            <mat-icon>insert_chart</mat-icon>
+            <p>Highcharts visualization will be integrated here</p>
+            <p class="chart-note">Showing live data from 1-equipment units</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-section">
+      <h2>Quick Actions</h2>
+      <div class="action-buttons">
+        <button mat-raised-button color="primary">
+          <mat-icon>insert_chart</mat-icon>
+          Create Chart
+        </button>
+        <button mat-raised-button color="accent">
+          <mat-icon>view_quilt</mat-icon>
+          Design Dashboard
+        </button>
+        <button mat-raised-button>
+          <mat-icon>assessment</mat-icon>
+          Generate Report
+        </button>
+        <button mat-raised-button>
+          <mat-icon>settings</mat-icon>
+          Manage Data
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

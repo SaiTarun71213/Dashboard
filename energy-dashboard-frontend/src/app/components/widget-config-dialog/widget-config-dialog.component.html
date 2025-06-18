@@ -1,0 +1,163 @@
+<div class="widget-config-dialog">
+  <div mat-dialog-title class="dialog-header">
+    <mat-icon>settings</mat-icon>
+    <h2>Configure Widget</h2>
+  </div>
+
+  <div mat-dialog-content class="dialog-content">
+    <form [formGroup]="configForm" class="config-form">
+      
+      <!-- General Configuration -->
+      <mat-card class="config-section">
+        <mat-card-header>
+          <mat-card-title>General Settings</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Widget Title</mat-label>
+            <input matInput formControlName="title" placeholder="Enter widget title">
+            <mat-icon matSuffix>title</mat-icon>
+          </mat-form-field>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Metric Widget Configuration -->
+      <mat-card *ngIf="widget.type === 'metric'" class="config-section">
+        <mat-card-header>
+          <mat-card-title>Metric Configuration</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Data Field</mat-label>
+              <mat-select formControlName="metricField">
+                <mat-option *ngFor="let field of energyFields" [value]="field.value">
+                  {{ field.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Aggregation</mat-label>
+              <mat-select formControlName="metricAggregation">
+                <mat-option *ngFor="let agg of aggregationTypes" [value]="agg.value">
+                  {{ agg.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Display Label</mat-label>
+              <input matInput formControlName="metricLabel" placeholder="e.g., Total Power">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Unit</mat-label>
+              <input matInput formControlName="metricUnit" placeholder="e.g., kW, %, °C">
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Chart Widget Configuration -->
+      <mat-card *ngIf="widget.type === 'chart'" class="config-section">
+        <mat-card-header>
+          <mat-card-title>Chart Configuration</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Chart Type</mat-label>
+            <mat-select formControlName="chartType">
+              <mat-option *ngFor="let chart of chartTypes" [value]="chart.value">
+                <mat-icon>{{ chart.icon }}</mat-icon>
+                {{ chart.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>X-Axis Field</mat-label>
+              <mat-select formControlName="xAxisField">
+                <mat-option *ngFor="let field of energyFields" [value]="field.value">
+                  {{ field.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Y-Axis Field</mat-label>
+              <mat-select formControlName="yAxisField">
+                <mat-option *ngFor="let field of energyFields" [value]="field.value">
+                  {{ field.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>X-Axis Label</mat-label>
+              <input matInput formControlName="xAxisLabel" placeholder="e.g., Time">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Y-Axis Label</mat-label>
+              <input matInput formControlName="yAxisLabel" placeholder="e.g., Power (kW)">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-slide-toggle formControlName="showLegend">Show Legend</mat-slide-toggle>
+            <mat-slide-toggle formControlName="showGrid">Show Grid</mat-slide-toggle>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Table Widget Configuration -->
+      <mat-card *ngIf="widget.type === 'table'" class="config-section">
+        <mat-card-header>
+          <mat-card-title>Table Configuration</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Sort By</mat-label>
+              <mat-select formControlName="tableSortBy">
+                <mat-option *ngFor="let field of energyFields" [value]="field.value">
+                  {{ field.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Page Size</mat-label>
+              <mat-select formControlName="tablePageSize">
+                <mat-option value="5">5 rows</mat-option>
+                <mat-option value="10">10 rows</mat-option>
+                <mat-option value="25">25 rows</mat-option>
+                <mat-option value="50">50 rows</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="columns-section">
+            <h4>Table Columns</h4>
+            <p class="help-text">Select which fields to display as columns</p>
+            <!-- TODO: Add multi-select for table columns -->
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+    </form>
+  </div>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="configForm.invalid">
+      Save Configuration
+    </button>
+  </div>
+</div>

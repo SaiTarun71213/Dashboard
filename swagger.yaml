@@ -1,0 +1,1616 @@
+openapi: 3.0.3
+info:
+  title: Energy Dashboard API
+  description: |
+    Comprehensive API for Energy Dashboard Management System
+    
+    This API provides endpoints for:
+    - Authentication and user management
+    - Chart builder functionality
+    - Dashboard layout management
+    - Data aggregation and analytics
+    - Real-time data streaming
+    
+    ## Authentication
+    All endpoints (except login/register) require JWT authentication.
+    Include the token in the Authorization header: `Bearer <token>`
+    
+    ## Response Format
+    All responses follow a consistent format:
+    ```json
+    {
+      "success": true,
+      "data": {...},
+      "message": "Success message",
+      "timestamp": "2025-06-18T18:00:00.000Z"
+    }
+    ```
+    
+  version: 1.0.0
+  contact:
+    name: Energy Dashboard API Support
+    email: support@energydashboard.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.energydashboard.com/api
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common Schemas
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the request was successful
+        data:
+          type: object
+          description: Response data
+        message:
+          type: string
+          description: Response message
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+        error:
+          type: object
+          description: Error details (only present when success is false)
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    # User & Auth Schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: User ID
+        name:
+          type: string
+          description: Full name
+        email:
+          type: string
+          format: email
+          description: Email address
+        role:
+          type: string
+          enum: [ADMIN, MANAGER, OPERATOR, VIEWER]
+          description: User role
+        permissions:
+          type: array
+          items:
+            type: string
+          description: User permissions
+        profile:
+          type: object
+          properties:
+            avatar:
+              type: string
+            department:
+              type: string
+            location:
+              type: string
+        preferences:
+          type: object
+          properties:
+            theme:
+              type: string
+              enum: [light, dark]
+            language:
+              type: string
+            timezone:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@energydashboard.com
+        password:
+          type: string
+          format: password
+          example: Admin123!
+
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        tokens:
+          type: object
+          properties:
+            accessToken:
+              type: string
+              description: JWT access token
+            refreshToken:
+              type: string
+              description: JWT refresh token
+            expiresIn:
+              type: integer
+              description: Token expiration time in seconds
+
+    # Chart Builder Schemas
+    ChartConfiguration:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Chart ID
+        name:
+          type: string
+          description: Chart name
+        description:
+          type: string
+          description: Chart description
+        chartType:
+          type: string
+          enum: [line, bar, column, area, pie, scatter, bubble, spline]
+          description: Type of chart
+        level:
+          type: string
+          enum: [SECTOR, STATE, PLANT, EQUIPMENT]
+          description: Data aggregation level
+        entityId:
+          type: string
+          description: Entity ID for data filtering
+        config:
+          type: object
+          properties:
+            xAxis:
+              type: object
+              properties:
+                field:
+                  type: string
+                label:
+                  type: string
+                type:
+                  type: string
+                  enum: [datetime, number, category]
+            yAxis:
+              type: object
+              properties:
+                field:
+                  type: string
+                label:
+                  type: string
+                type:
+                  type: string
+                  enum: [number]
+            series:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  field:
+                    type: string
+                  aggregation:
+                    type: string
+                    enum: [SUM, AVERAGE, MIN, MAX, COUNT]
+                  color:
+                    type: string
+            filters:
+              type: object
+            timeRange:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date-time
+                end:
+                  type: string
+                  format: date-time
+                preset:
+                  type: string
+                  enum: [1h, 6h, 24h, 7d, 30d]
+        tags:
+          type: array
+          items:
+            type: string
+        isTemplate:
+          type: boolean
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ChartData:
+      type: object
+      properties:
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              data:
+                type: array
+                items:
+                  oneOf:
+                    - type: number
+                    - type: array
+                      items:
+                        oneOf:
+                          - type: number
+                          - type: string
+        categories:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          properties:
+            totalRecords:
+              type: integer
+            timeRange:
+              type: object
+            aggregationLevel:
+              type: string
+            lastUpdated:
+              type: string
+              format: date-time
+
+    # Dashboard Schemas
+    Dashboard:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Dashboard ID
+        name:
+          type: string
+          description: Dashboard name
+        description:
+          type: string
+          description: Dashboard description
+        level:
+          type: string
+          enum: [SECTOR, STATE, PLANT, EQUIPMENT]
+          description: Dashboard level
+        dashboardType:
+          type: string
+          enum: [LIVE, ANALYTICAL]
+          description: Dashboard type
+        layout:
+          type: object
+          properties:
+            columns:
+              type: integer
+              minimum: 1
+              maximum: 24
+            rows:
+              type: integer
+              minimum: 1
+            gap:
+              type: integer
+              minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardWidget'
+        tags:
+          type: array
+          items:
+            type: string
+        isTemplate:
+          type: boolean
+        isPublic:
+          type: boolean
+        permissions:
+          type: object
+          properties:
+            view:
+              type: array
+              items:
+                type: string
+            edit:
+              type: array
+              items:
+                type: string
+        usageStats:
+          type: object
+          properties:
+            viewCount:
+              type: integer
+            avgSessionDuration:
+              type: number
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DashboardWidget:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Widget ID
+        type:
+          type: string
+          enum: [chart, metric, table, text, image]
+          description: Widget type
+        title:
+          type: string
+          description: Widget title
+        position:
+          type: object
+          properties:
+            x:
+              type: integer
+              minimum: 0
+            y:
+              type: integer
+              minimum: 0
+        size:
+          type: object
+          properties:
+            width:
+              type: integer
+              minimum: 1
+            height:
+              type: integer
+              minimum: 1
+        config:
+          type: object
+          description: Widget-specific configuration
+        chartId:
+          type: string
+          description: Reference to chart (for chart widgets)
+        options:
+          type: object
+          properties:
+            showTitle:
+              type: boolean
+            refreshInterval:
+              type: integer
+            autoRefresh:
+              type: boolean
+            customStyles:
+              type: object
+            resizable:
+              type: boolean
+            draggable:
+              type: boolean
+            removable:
+              type: boolean
+            collapsible:
+              type: boolean
+            collapsed:
+              type: boolean
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+
+    LevelParam:
+      name: level
+      in: query
+      description: Data aggregation level
+      schema:
+        type: string
+        enum: [SECTOR, STATE, PLANT, EQUIPMENT]
+
+    TimeRangeParam:
+      name: timeRange
+      in: query
+      description: Time range for data
+      schema:
+        type: string
+        enum: [1h, 6h, 24h, 7d, 30d]
+        default: 24h
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "UNAUTHORIZED"
+              message: "Authentication required"
+            timestamp: "2025-06-18T18:00:00.000Z"
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "FORBIDDEN"
+              message: "Insufficient permissions"
+            timestamp: "2025-06-18T18:00:00.000Z"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "NOT_FOUND"
+              message: "Resource not found"
+            timestamp: "2025-06-18T18:00:00.000Z"
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "VALIDATION_ERROR"
+              message: "Invalid input data"
+              details:
+                field: "email"
+                message: "Invalid email format"
+            timestamp: "2025-06-18T18:00:00.000Z"
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "INTERNAL_ERROR"
+              message: "Internal server error"
+            timestamp: "2025-06-18T18:00:00.000Z"
+
+paths:
+  # Authentication Endpoints
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return JWT tokens
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /auth/profile:
+    get:
+      tags:
+        - Authentication
+      summary: Get user profile
+      description: Get current user profile information
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # Chart Builder Endpoints
+  /chart-builder/charts:
+    get:
+      tags:
+        - Chart Builder
+      summary: Get all charts
+      description: Retrieve all charts with pagination and filtering
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/LevelParam'
+        - name: search
+          in: query
+          description: Search term for chart name/description
+          schema:
+            type: string
+        - name: chartType
+          in: query
+          description: Filter by chart type
+          schema:
+            type: string
+            enum: [line, bar, column, area, pie, scatter, bubble, spline]
+        - name: tags
+          in: query
+          description: Filter by tags (comma-separated)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Charts retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          charts:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ChartConfiguration'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    post:
+      tags:
+        - Chart Builder
+      summary: Create new chart
+      description: Create a new chart configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - chartType
+                - level
+              properties:
+                name:
+                  type: string
+                  example: "Power Generation Trend"
+                description:
+                  type: string
+                  example: "Daily power generation trend for solar plants"
+                chartType:
+                  type: string
+                  enum: [line, bar, column, area, pie, scatter, bubble, spline]
+                  example: "line"
+                level:
+                  type: string
+                  enum: [SECTOR, STATE, PLANT, EQUIPMENT]
+                  example: "PLANT"
+                entityId:
+                  type: string
+                  example: "plant_123"
+                config:
+                  type: object
+                  example:
+                    xAxis:
+                      field: "timestamp"
+                      label: "Time"
+                      type: "datetime"
+                    yAxis:
+                      field: "electrical.activePower"
+                      label: "Power (kW)"
+                      type: "number"
+                    series:
+                      - name: "Active Power"
+                        field: "electrical.activePower"
+                        aggregation: "AVERAGE"
+                        color: "#1976d2"
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example: ["power", "solar", "trend"]
+                isTemplate:
+                  type: boolean
+                  example: false
+      responses:
+        '201':
+          description: Chart created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ChartConfiguration'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /chart-builder/charts/{chartId}:
+    get:
+      tags:
+        - Chart Builder
+      summary: Get chart by ID
+      description: Retrieve a specific chart configuration
+      parameters:
+        - name: chartId
+          in: path
+          required: true
+          description: Chart ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Chart retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ChartConfiguration'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    put:
+      tags:
+        - Chart Builder
+      summary: Update chart
+      description: Update an existing chart configuration
+      parameters:
+        - name: chartId
+          in: path
+          required: true
+          description: Chart ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                chartType:
+                  type: string
+                  enum: [line, bar, column, area, pie, scatter, bubble, spline]
+                level:
+                  type: string
+                  enum: [SECTOR, STATE, PLANT, EQUIPMENT]
+                entityId:
+                  type: string
+                config:
+                  type: object
+                tags:
+                  type: array
+                  items:
+                    type: string
+                isTemplate:
+                  type: boolean
+      responses:
+        '200':
+          description: Chart updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ChartConfiguration'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    delete:
+      tags:
+        - Chart Builder
+      summary: Delete chart
+      description: Delete a chart configuration
+      parameters:
+        - name: chartId
+          in: path
+          required: true
+          description: Chart ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Chart deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: "Chart deleted successfully"
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /chart-builder/charts/{chartId}/data:
+    get:
+      tags:
+        - Chart Builder
+      summary: Get chart data
+      description: Retrieve data for a specific chart
+      parameters:
+        - name: chartId
+          in: path
+          required: true
+          description: Chart ID
+          schema:
+            type: string
+        - $ref: '#/components/parameters/TimeRangeParam'
+        - name: refresh
+          in: query
+          description: Force refresh data from source
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Chart data retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ChartData'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # Dashboard Layout Endpoints
+  /dashboard-layout/dashboards:
+    get:
+      tags:
+        - Dashboard Layout
+      summary: Get user dashboards
+      description: Retrieve all dashboards for the current user
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/LevelParam'
+        - name: search
+          in: query
+          description: Search term for dashboard name/description
+          schema:
+            type: string
+        - name: dashboardType
+          in: query
+          description: Filter by dashboard type
+          schema:
+            type: string
+            enum: [LIVE, ANALYTICAL]
+        - name: tags
+          in: query
+          description: Filter by tags (comma-separated)
+          schema:
+            type: string
+        - name: isTemplate
+          in: query
+          description: Filter templates
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Dashboards retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          dashboards:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Dashboard'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    post:
+      tags:
+        - Dashboard Layout
+      summary: Create new dashboard
+      description: Create a new dashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - level
+                - dashboardType
+              properties:
+                name:
+                  type: string
+                  example: "Solar Plant Overview"
+                description:
+                  type: string
+                  example: "Real-time overview of solar plant performance"
+                level:
+                  type: string
+                  enum: [SECTOR, STATE, PLANT, EQUIPMENT]
+                  example: "PLANT"
+                dashboardType:
+                  type: string
+                  enum: [LIVE, ANALYTICAL]
+                  example: "LIVE"
+                layout:
+                  type: object
+                  properties:
+                    columns:
+                      type: integer
+                      minimum: 1
+                      maximum: 24
+                      example: 12
+                    rows:
+                      type: integer
+                      minimum: 1
+                      example: 8
+                    gap:
+                      type: integer
+                      minimum: 0
+                      example: 16
+                widgets:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [chart, metric, table, text, image]
+                      title:
+                        type: string
+                      x:
+                        type: integer
+                        minimum: 0
+                      y:
+                        type: integer
+                        minimum: 0
+                      cols:
+                        type: integer
+                        minimum: 1
+                      rows:
+                        type: integer
+                        minimum: 1
+                      config:
+                        type: object
+                      chartId:
+                        type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example: ["solar", "live", "overview"]
+                isTemplate:
+                  type: boolean
+                  example: false
+                isPublic:
+                  type: boolean
+                  example: false
+      responses:
+        '201':
+          description: Dashboard created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /dashboard-layout/dashboards/{dashboardId}:
+    get:
+      tags:
+        - Dashboard Layout
+      summary: Get dashboard by ID
+      description: Retrieve a specific dashboard with widget data
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          description: Dashboard ID
+          schema:
+            type: string
+        - $ref: '#/components/parameters/TimeRangeParam'
+        - name: includeData
+          in: query
+          description: Include widget data in response
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Dashboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          dashboard:
+                            $ref: '#/components/schemas/Dashboard'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    put:
+      tags:
+        - Dashboard Layout
+      summary: Update dashboard
+      description: Update an existing dashboard
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          description: Dashboard ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                level:
+                  type: string
+                  enum: [SECTOR, STATE, PLANT, EQUIPMENT]
+                dashboardType:
+                  type: string
+                  enum: [LIVE, ANALYTICAL]
+                layout:
+                  type: object
+                  properties:
+                    columns:
+                      type: integer
+                      minimum: 1
+                      maximum: 24
+                    rows:
+                      type: integer
+                      minimum: 1
+                    gap:
+                      type: integer
+                      minimum: 0
+                tags:
+                  type: array
+                  items:
+                    type: string
+                isTemplate:
+                  type: boolean
+                isPublic:
+                  type: boolean
+      responses:
+        '200':
+          description: Dashboard updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    delete:
+      tags:
+        - Dashboard Layout
+      summary: Delete dashboard
+      description: Delete a dashboard
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          description: Dashboard ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dashboard deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: "Dashboard deleted successfully"
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /dashboard-layout/dashboards/{dashboardId}/widgets:
+    post:
+      tags:
+        - Dashboard Layout
+      summary: Add widget to dashboard
+      description: Add a new widget to an existing dashboard
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          description: Dashboard ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - title
+              properties:
+                type:
+                  type: string
+                  enum: [chart, metric, table, text, image]
+                  example: "chart"
+                title:
+                  type: string
+                  example: "Power Trend Chart"
+                layout:
+                  type: object
+                  properties:
+                    x:
+                      type: integer
+                      minimum: 0
+                      example: 0
+                    y:
+                      type: integer
+                      minimum: 0
+                      example: 0
+                    width:
+                      type: integer
+                      minimum: 1
+                      example: 6
+                    height:
+                      type: integer
+                      minimum: 1
+                      example: 4
+                config:
+                  type: object
+                  example:
+                    metric:
+                      field: "electrical.activePower"
+                      label: "Active Power"
+                      unit: "kW"
+                      aggregation: "SUM"
+                chartId:
+                  type: string
+                  example: "chart_123"
+                options:
+                  type: object
+                  properties:
+                    showTitle:
+                      type: boolean
+                      default: true
+                    refreshInterval:
+                      type: integer
+                      default: 300
+                    autoRefresh:
+                      type: boolean
+                      default: true
+      responses:
+        '201':
+          description: Widget added successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DashboardWidget'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # Data Aggregation Endpoints
+  /aggregation/sector:
+    get:
+      tags:
+        - Data Aggregation
+      summary: Get sector-level aggregation
+      description: Retrieve aggregated data at sector level
+      parameters:
+        - $ref: '#/components/parameters/TimeRangeParam'
+        - name: metrics
+          in: query
+          description: Comma-separated list of metrics to include
+          schema:
+            type: string
+            example: "activePower,efficiency,availability"
+      responses:
+        '200':
+          description: Sector aggregation retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          sector:
+                            type: object
+                            properties:
+                              totalCapacity:
+                                type: number
+                              activePower:
+                                type: number
+                              efficiency:
+                                type: number
+                              availability:
+                                type: number
+                              plantCount:
+                                type: integer
+                              equipmentCount:
+                                type: integer
+                          breakdown:
+                            type: object
+                            properties:
+                              byState:
+                                type: array
+                                items:
+                                  type: object
+                              byPlantType:
+                                type: array
+                                items:
+                                  type: object
+                          timeRange:
+                            type: object
+                            properties:
+                              start:
+                                type: string
+                                format: date-time
+                              end:
+                                type: string
+                                format: date-time
+                          lastUpdated:
+                            type: string
+                            format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /aggregation/states:
+    get:
+      tags:
+        - Data Aggregation
+      summary: Get state-level aggregations
+      description: Retrieve aggregated data for all states
+      parameters:
+        - $ref: '#/components/parameters/TimeRangeParam'
+        - name: stateId
+          in: query
+          description: Filter by specific state ID
+          schema:
+            type: string
+        - name: metrics
+          in: query
+          description: Comma-separated list of metrics to include
+          schema:
+            type: string
+      responses:
+        '200':
+          description: State aggregations retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          states:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                stateId:
+                                  type: string
+                                name:
+                                  type: string
+                                metrics:
+                                  type: object
+                                plantCount:
+                                  type: integer
+                                equipmentCount:
+                                  type: integer
+                          summary:
+                            type: object
+                          lastUpdated:
+                            type: string
+                            format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /aggregation/plants:
+    get:
+      tags:
+        - Data Aggregation
+      summary: Get plant-level aggregations
+      description: Retrieve aggregated data for plants
+      parameters:
+        - $ref: '#/components/parameters/TimeRangeParam'
+        - name: stateId
+          in: query
+          description: Filter by state ID
+          schema:
+            type: string
+        - name: plantId
+          in: query
+          description: Filter by specific plant ID
+          schema:
+            type: string
+        - name: plantType
+          in: query
+          description: Filter by plant type
+          schema:
+            type: string
+            enum: [SOLAR, WIND, HYDRO]
+        - name: metrics
+          in: query
+          description: Comma-separated list of metrics to include
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plant aggregations retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          plants:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                plantId:
+                                  type: string
+                                name:
+                                  type: string
+                                type:
+                                  type: string
+                                metrics:
+                                  type: object
+                                equipmentCount:
+                                  type: integer
+                                status:
+                                  type: string
+                          summary:
+                            type: object
+                          lastUpdated:
+                            type: string
+                            format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # Real-time Data Endpoints
+  /realtime/subscribe:
+    post:
+      tags:
+        - Real-time Data
+      summary: Subscribe to real-time updates
+      description: Subscribe to real-time data updates via WebSocket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                level:
+                  type: string
+                  enum: [SECTOR, STATE, PLANT, EQUIPMENT]
+                  example: "PLANT"
+                entityId:
+                  type: string
+                  example: "plant_123"
+                metrics:
+                  type: array
+                  items:
+                    type: string
+                  example: ["activePower", "efficiency"]
+                interval:
+                  type: integer
+                  minimum: 1
+                  maximum: 300
+                  example: 30
+                  description: Update interval in seconds
+      responses:
+        '200':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          subscriptionId:
+                            type: string
+                          websocketUrl:
+                            type: string
+                            example: "ws://localhost:3000"
+                          channel:
+                            type: string
+                            example: "plant_123_updates"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /realtime/unsubscribe:
+    post:
+      tags:
+        - Real-time Data
+      summary: Unsubscribe from real-time updates
+      description: Unsubscribe from real-time data updates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subscriptionId
+              properties:
+                subscriptionId:
+                  type: string
+                  example: "sub_123456"
+      responses:
+        '200':
+          description: Unsubscribed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: "Unsubscribed successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+tags:
+  - name: Authentication
+    description: User authentication and profile management
+  - name: Chart Builder
+    description: Chart creation and management
+  - name: Dashboard Layout
+    description: Dashboard layout and widget management
+  - name: Data Aggregation
+    description: Data aggregation and analytics
+  - name: Real-time Data
+    description: Real-time data streaming and updates

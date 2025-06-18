@@ -1,0 +1,328 @@
+<div class="dashboard-designer">
+  <!-- Header -->
+  <div class="designer-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1>
+          <mat-icon>view_quilt</mat-icon>
+          Dashboard Designer
+        </h1>
+        <p>Create and customize energy sector dashboards with drag-and-drop widgets</p>
+      </div>
+
+      <div class="header-actions">
+        <button mat-raised-button (click)="createNewDashboard()">
+          <mat-icon>add</mat-icon>
+          New Dashboard
+        </button>
+        <button mat-raised-button color="primary" (click)="saveDashboard()" [disabled]="isSaving">
+          <mat-icon>save</mat-icon>
+          {{ isSaving ? 'Saving...' : 'Save Dashboard' }}
+        </button>
+        <button mat-raised-button color="accent" (click)="addTestWidget()">
+          <mat-icon>add_box</mat-icon>
+          Add Test Widget
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading dashboard designer...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading" class="designer-content">
+
+    <!-- Sidebar -->
+    <div class="designer-sidebar">
+      <mat-tab-group [(selectedIndex)]="selectedTab" class="sidebar-tabs">
+
+        <!-- Dashboard Settings Tab -->
+        <mat-tab label="Settings">
+          <div class="tab-content">
+            <form [formGroup]="dashboardForm" class="dashboard-form">
+
+              <!-- Basic Information -->
+              <div class="form-section">
+                <h3>Basic Information</h3>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Dashboard Name</mat-label>
+                  <input matInput formControlName="name" placeholder="Enter dashboard name">
+                  <mat-error *ngIf="dashboardForm.get('name')?.hasError('required')">
+                    Dashboard name is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Description</mat-label>
+                  <textarea matInput formControlName="description" rows="3"
+                    placeholder="Describe the purpose of this dashboard"></textarea>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Data Level</mat-label>
+                  <mat-select formControlName="level">
+                    <mat-option *ngFor="let level of dataLevels" [value]="level.value">
+                      {{ level.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Dashboard Type</mat-label>
+                  <mat-select formControlName="dashboardType">
+                    <mat-option *ngFor="let type of dashboardTypes" [value]="type.value">
+                      <div class="dashboard-type-option">
+                        <span class="type-label">{{ type.label }}</span>
+                        <span class="type-description">{{ type.description }}</span>
+                      </div>
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Layout Settings -->
+              <div class="form-section">
+                <h3>Layout Settings</h3>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Grid Columns</mat-label>
+                  <input matInput type="number" formControlName="columns" min="6" max="24">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Grid Rows</mat-label>
+                  <input matInput type="number" formControlName="rows" min="4" max="16">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Grid Gap (px)</mat-label>
+                  <input matInput type="number" formControlName="gap" min="8" max="32">
+                </mat-form-field>
+
+                <mat-slide-toggle [(ngModel)]="showGrid" [ngModelOptions]="{standalone: true}">
+                  Show Grid Lines
+                </mat-slide-toggle>
+              </div>
+
+              <!-- Template Settings -->
+              <div class="form-section">
+                <h3>Template Settings</h3>
+
+                <mat-slide-toggle formControlName="isTemplate">
+                  Save as Template
+                </mat-slide-toggle>
+
+                <p class="template-note" *ngIf="dashboardForm.get('isTemplate')?.value">
+                  This dashboard will be available as a template for other users
+                </p>
+              </div>
+
+            </form>
+          </div>
+        </mat-tab>
+
+        <!-- Widget Templates Tab -->
+        <mat-tab label="Widgets">
+          <div class="tab-content">
+            <div class="widget-templates">
+              <h3>Available Widgets</h3>
+              <p class="drag-instruction">Drag widgets to the dashboard canvas</p>
+
+              <div class="widget-categories">
+                <div *ngFor="let category of ['Metrics', 'Charts', 'Tables', 'Saved Charts']" class="widget-category">
+                  <h4>{{ category }}</h4>
+                  <p *ngIf="category === 'Saved Charts'" class="category-description">
+                    Charts created in Chart Builder
+                  </p>
+
+                  <div class="widget-list" cdkDropList [cdkDropListData]="getWidgetsByCategory(category)"
+                    [cdkDropListConnectedTo]="['dashboard-canvas']" cdkDropListSortingDisabled="true">
+                    <div *ngFor="let widget of getWidgetsByCategory(category)" class="widget-template"
+                      [class.saved-chart]="category === 'Saved Charts'" cdkDrag [cdkDragData]="widget"
+                      (click)="addWidgetFromTemplate(widget)">
+                      <div class="widget-icon">
+                        <mat-icon>{{ widget.icon }}</mat-icon>
+                      </div>
+                      <div class="widget-info">
+                        <span class="widget-name">{{ widget.name }}</span>
+                        <span class="widget-description">{{ widget.description }}</span>
+                        <span *ngIf="widget.chartId" class="chart-id">ID: {{ widget.chartId }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Empty state for saved charts -->
+                  <div *ngIf="category === 'Saved Charts' && getWidgetsByCategory(category).length === 0"
+                    class="empty-category">
+                    <mat-icon>insert_chart</mat-icon>
+                    <p>No saved charts found</p>
+                    <small>Create charts in Chart Builder to use them here</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Dashboard Templates Tab -->
+        <mat-tab label="Templates">
+          <div class="tab-content">
+            <div class="dashboard-templates">
+              <h3>Dashboard Templates</h3>
+              <p class="template-instruction">Apply pre-built dashboard templates</p>
+
+              <div class="template-list">
+                <div *ngFor="let template of dashboardTemplates" class="template-card">
+                  <div class="template-header">
+                    <h4>{{ template.name }}</h4>
+                    <span class="template-level">{{ template.level }}</span>
+                  </div>
+                  <p class="template-description">{{ template.description }}</p>
+                  <div class="template-meta">
+                    <span class="widget-count">{{ template.widgets.length }} widgets</span>
+                    <span class="template-type">{{ template.dashboardType }}</span>
+                  </div>
+                  <div class="template-actions">
+                    <button mat-button color="primary" (click)="applyTemplate(template)">
+                      <mat-icon>file_copy</mat-icon>
+                      Apply Template
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="dashboardTemplates.length === 0" class="no-templates">
+                <mat-icon>folder_open</mat-icon>
+                <p>No dashboard templates available</p>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+      </mat-tab-group>
+    </div>
+
+    <!-- Main Canvas -->
+    <div class="designer-canvas">
+      <div class="canvas-header">
+        <h2>{{ dashboardForm.get('name')?.value || 'Untitled Dashboard' }}</h2>
+        <div class="canvas-controls">
+          <button mat-icon-button [class.active]="showGrid" (click)="showGrid = !showGrid">
+            <mat-icon>grid_on</mat-icon>
+          </button>
+          <span class="grid-info">{{ gridColumns }} × {{ gridRows }} Grid</span>
+        </div>
+      </div>
+
+      <!-- Dashboard Grid with Gridster -->
+      <div class="dashboard-container" cdkDropList id="dashboard-canvas" [cdkDropListData]="dashboardWidgets"
+        (cdkDropListDropped)="onWidgetDrop($event)" [cdkDropListEnterPredicate]="canDropWidget">
+
+        <gridster [options]="gridsterOptions">
+
+          <!-- Dashboard Widgets -->
+          <gridster-item *ngFor="let widget of dashboardWidgets; let i = index" [item]="widget"
+            class="dashboard-widget">
+
+            <div class="widget-header">
+              <div class="widget-title-section">
+                <span class="widget-title">{{ widget.title }}</span>
+              </div>
+              <div class="widget-actions">
+                <button mat-icon-button class="widget-action" (click)="configureWidget(widget)"
+                  matTooltip="Configure Widget">
+                  <mat-icon>settings</mat-icon>
+                </button>
+                <button mat-icon-button class="widget-action" (click)="removeWidget(i)" matTooltip="Remove Widget">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="widget-content">
+              <!-- Widget content based on type -->
+              <div [ngSwitch]="widget.type" class="widget-body">
+
+                <!-- Metric Widget -->
+                <div *ngSwitchCase="'metric'" class="metric-widget">
+                  <div class="metric-value">{{ getMetricValue(widget) }}</div>
+                  <div class="metric-label">{{ widget.config.metric?.label }}</div>
+                  <div class="metric-unit">{{ widget.config.metric?.unit }}</div>
+                </div>
+
+                <!-- Chart Widget -->
+                <div *ngSwitchCase="'chart'" class="chart-widget">
+                  <!-- Render saved chart if chartId exists -->
+                  <app-chart-widget *ngIf="widget.config.chartId; else chartPlaceholder"
+                    [chartConfig]="widget.config.chartConfig || widget.config" [chartId]="widget.config.chartId">
+                  </app-chart-widget>
+
+                  <!-- Chart placeholder for new charts -->
+                  <ng-template #chartPlaceholder>
+                    <div class="chart-placeholder">
+                      <mat-icon>insert_chart</mat-icon>
+                      <span>{{ widget.config.chartType || 'Chart' }} Preview</span>
+                    </div>
+                  </ng-template>
+                </div>
+
+                <!-- Table Widget -->
+                <div *ngSwitchCase="'table'" class="table-widget">
+                  <div class="table-placeholder">
+                    <mat-icon>table_chart</mat-icon>
+                    <span>Data Table Preview</span>
+                  </div>
+                </div>
+
+                <!-- Text Widget -->
+                <div *ngSwitchCase="'text'" class="text-widget">
+                  <div class="text-content">
+                    <p>{{ widget.config.content }}</p>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut
+                      labore et dolore magna aliqua.</p>
+                    <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+                      consequat.</p>
+                    <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+                      pariatur.</p>
+                    <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
+                      est laborum.</p>
+                    <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.
+                    </p>
+                    <p>Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae
+                      dicta sunt.</p>
+                    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p>
+                    <p>Sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+                    <p>Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.</p>
+                    <p>Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam.</p>
+                  </div>
+                </div>
+
+                <!-- Default Widget -->
+                <div *ngSwitchDefault class="default-widget">
+                  <mat-icon>widgets</mat-icon>
+                  <span>{{ widget.type }} Widget</span>
+                </div>
+
+              </div>
+            </div>
+
+          </gridster-item>
+
+          <!-- Empty State -->
+          <div *ngIf="dashboardWidgets.length === 0" class="empty-dashboard">
+            <mat-icon>view_quilt</mat-icon>
+            <h3>Start Building Your Dashboard</h3>
+            <p>Drag widgets from the sidebar to create your custom dashboard</p>
+          </div>
+
+        </gridster>
+      </div>
+    </div>
+
+  </div>
+</div>

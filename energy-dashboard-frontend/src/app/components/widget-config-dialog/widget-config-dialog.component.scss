@@ -1,0 +1,180 @@
+.widget-config-dialog {
+  width: 600px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  border-bottom: 1px solid #e0e0e0;
+  margin: 0 -24px 20px -24px;
+  padding-bottom: 16px;
+
+  mat-icon {
+    color: #1976d2;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+}
+
+.dialog-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px;
+  margin: 0 -24px;
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.config-section {
+  margin-bottom: 16px;
+
+  mat-card-header {
+    margin-bottom: 16px;
+
+    mat-card-title {
+      color: #333;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+  }
+
+  mat-card-content {
+    padding-top: 0;
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.half-width {
+  flex: 1;
+}
+
+.columns-section {
+  margin-top: 20px;
+
+  h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .help-text {
+    margin: 0 0 16px 0;
+    color: #666;
+    font-size: 0.9rem;
+  }
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px 0 24px;
+  margin: 0 -24px;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 20px;
+
+  button {
+    min-width: 100px;
+  }
+}
+
+// Form field customizations
+mat-form-field {
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none; // Hide the subscript area to save space
+  }
+}
+
+mat-select {
+  mat-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #666;
+    }
+  }
+}
+
+mat-slide-toggle {
+  margin-right: 24px;
+
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .widget-config-dialog {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .half-width {
+    width: 100%;
+  }
+}
