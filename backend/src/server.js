@@ -7,7 +7,7 @@ const aggregationEngine = require('./services/AggregationEngine');
 const webSocketService = require('./services/WebSocketService');
 
 // Server configuration
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Start the server
 const startServer = async () => {
